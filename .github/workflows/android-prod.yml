@@ -30,6 +30,8 @@ jobs:
         run: |
           yarn install
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
       - name: Build Android Release
         run: |
           ./gradlew bundleRelease --no-daemon
