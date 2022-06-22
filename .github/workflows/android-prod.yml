@@ -1,0 +1,53 @@
+name: Android Prod
+
+on:
+  push:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  install-prod-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache node modules
+        id: yarn-cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        if: ${{ steps.yarn-cache.outputs.cache-hit != 'true' }}
+        run: |
+          yarn install
+
+      - name: Build Android Release
+        run: |
+          ./gradlew bundleRelease --no-daemon
+        working-directory: android
+
+      - name: Sign App Bundle
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: key-up
+          keyStorePassword: 123456
+          keyPassword: 123456
+
+      - name: Upload Artifact to Github Store
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-release.aab
+          path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          retention-days: 1
