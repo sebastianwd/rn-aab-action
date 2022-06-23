@@ -40,6 +40,7 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: android/app/build/outputs/bundle/release
+          # https://developer.android.com/studio/publish/app-signing#generate-key
           # openssl base64 < up-keystore.jks | tr -d '\n' | tee up-keystore_base64_encoded.txt
           signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
           alias: key-up
